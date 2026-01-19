@@ -16,6 +16,14 @@ export const useGetPayment = (id: string) => {
   })
 }
 
+export const useGetPaymentByTransactionId = (transactionId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['payments', 'transaction', transactionId],
+    queryFn: () => paymentApiRequest.getPaymentByTransactionId(transactionId),
+    enabled: !!transactionId && enabled
+  })
+}
+
 export const useCreateMomoPaymentMutation = () => {
   return useMutation({
     mutationFn: (body: { amount: number; orderInfo: string; orderId: string }) =>

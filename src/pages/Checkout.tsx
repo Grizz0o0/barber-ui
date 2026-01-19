@@ -61,14 +61,10 @@ const Checkout = () => {
     }
   })
 
-  // Debug form errors
-  // console.log('Form Errors:', errors)
-
   const { user } = useAuth()
 
   useEffect(() => {
     if (user) {
-      console.log('User detected:', user)
       const addressStr =
         typeof user.address === 'string'
           ? user.address
@@ -121,7 +117,14 @@ const Checkout = () => {
       }
     }
 
-    createOrderMutation.mutate(orderData as any, {
+    const validOrderPayload = {
+      items: orderData.items,
+      shippingAddress: orderData.shippingAddress,
+      paymentMethod: orderData.paymentMethod as 'Cash' | 'MoMo' | 'Banking' // Explicit cast to match Schema Enum
+      // totalPrice & contactInfo removed as they are not in CreateOrderReqBody
+    }
+
+    createOrderMutation.mutate(validOrderPayload, {
       onSuccess: async (data: any) => {
         queryClient.invalidateQueries({ queryKey: ['cart'] })
         const orderId = data.metadata._id
@@ -184,8 +187,7 @@ const Checkout = () => {
       <section className='pb-12 md:pb-16'>
         <div className='container mx-auto px-4'>
           <form
-            onSubmit={handleSubmit(onSubmit, (errors) => {
-              console.log('Form Validation Errors:', errors)
+            onSubmit={handleSubmit(onSubmit, () => {
               toast.error('Vui lòng kiểm tra lại thông tin đơn hàng')
             })}
           >
@@ -316,10 +318,10 @@ const Checkout = () => {
                           </div>
                         </div>
                         <div className='bg-background rounded-lg p-4 text-center'>
-                          <div className='w-40 h-40 bg-muted rounded-lg mx-auto mb-3 flex items-center justify-center'>
-                            <span className='text-muted-foreground text-sm'>QR Code MoMo</span>
-                          </div>
-                          <p className='text-sm text-muted-foreground'>Mở app MoMo và quét mã để thanh toán</p>
+                          <p className='text-muted-foreground'>
+                            Sau khi bấm <span className='font-semibold text-foreground'>"Xác nhận thanh toán"</span>,
+                            bạn sẽ được chuyển hướng đến cổng thanh toán MoMo để hoàn tất giao dịch.
+                          </p>
                         </div>
                       </div>
                     )}

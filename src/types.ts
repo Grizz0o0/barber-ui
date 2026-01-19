@@ -36,7 +36,8 @@ export interface Review {
   rating: number
   comment: string
   images?: string[]
-  likes?: number
+  likes?: string[]
+  reply?: string
   createdAt?: string
   booking?: string | { service: string | Service }
 }
@@ -122,5 +123,5 @@ export interface Order {
 
 export interface SuccessResponse<Data> {
   message: string
-  data: Data
+  metadata: Data
 }

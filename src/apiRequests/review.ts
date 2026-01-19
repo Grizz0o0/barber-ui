@@ -6,7 +6,9 @@ export const reviewApiRequest = {
   createReview: (body: CreateReviewReqBody) => request.post('/reviews', body),
   updateReview: (id: string, body: UpdateReviewReqBody) => request.patch(`/reviews/${id}`, body),
   deleteReview: (id: string) => request.delete(`/reviews/${id}`),
-  replyReview: (id: string, body: ReplyReviewReqBody) => request.post(`/reviews/${id}/reply`, body)
+  replyReview: (id: string, body: ReplyReviewReqBody) => request.post(`/reviews/${id}/reply`, body),
+  likeReview: (id: string) => request.post(`/reviews/${id}/like`, {}),
+  getLikedReviews: (page = 1, limit = 10) => request.get('/reviews/likes', { page, limit })
 }
 
 export default reviewApiRequest

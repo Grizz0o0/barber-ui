@@ -9,6 +9,13 @@ export const useGetReviews = (page = 1, limit = 10) => {
   })
 }
 
+export const useGetLikedReviews = (page = 1, limit = 10) => {
+  return useQuery({
+    queryKey: ['liked-reviews', page, limit],
+    queryFn: () => reviewApiRequest.getLikedReviews(page, limit)
+  })
+}
+
 export const useCreateReviewMutation = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -43,6 +50,16 @@ export const useReplyReviewMutation = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: ReplyReviewReqBody }) => reviewApiRequest.replyReview(id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] })
+    }
+  })
+}
+
+export const useLikeReviewMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => reviewApiRequest.likeReview(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] })
     }

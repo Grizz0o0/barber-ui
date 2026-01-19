@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout'
 import { Button } from '@/components/ui/button'
 import { useGetBooking } from '@/queries/useBooking'
 import { useGetOrder } from '@/queries/useOrder'
+import { useGetPaymentByTransactionId } from '@/queries/usePayment'
 
 const PaymentResult = () => {
   const [searchParams] = useSearchParams()
@@ -12,35 +13,44 @@ const PaymentResult = () => {
   // MoMo returns these params
   const resultCode = searchParams.get('resultCode')
   const message = searchParams.get('message')
-  const orderId = searchParams.get('orderId')
+  const transactionId = searchParams.get('orderId') // orderId from MoMo IS our transactionId
 
-  // Fetch both concurrently
-  // We disable retry to fail fast if not found
-  const shouldFetch = !!orderId && resultCode === '0'
-  const { data: bookingData, isLoading: loadingBooking } = useGetBooking(orderId || '', shouldFetch)
-  const { data: orderData, isLoading: loadingOrder } = useGetOrder(orderId || '', shouldFetch)
+  // 1. Fetch Payment by Transaction ID first
+  const { data: paymentData, isLoading: loadingPayment } = useGetPaymentByTransactionId(
+    transactionId || '',
+    !!transactionId && resultCode === '0'
+  )
+
+  const payment = paymentData?.metadata
+
+  // 2. Fetch Booking OR Order based on what we found in Payment
+  const shouldFetchBooking = !!payment?.booking
+  const shouldFetchOrder = !!payment?.order
+
+  const { data: bookingData, isLoading: loadingBooking } = useGetBooking(payment?.booking || '', shouldFetchBooking)
+  const { data: orderData, isLoading: loadingOrder } = useGetOrder(payment?.order || '', shouldFetchOrder)
 
   // Derived state calculations
   let verificationStatus: 'loading' | 'success' | 'failed' = 'loading'
   let errorMessage: string | null = null
   let verifiedType: 'booking' | 'order' | null = null
 
-  if (!orderId) {
+  if (!transactionId) {
     verificationStatus = 'failed'
-    errorMessage = 'Không tìm thấy mã đơn hàng'
+    errorMessage = 'Không tìm thấy mã giao dịch'
   } else if (resultCode !== '0') {
     verificationStatus = 'failed'
     errorMessage = message || 'Giao dịch thất bại từ phía MoMo'
-  } else if (loadingBooking || loadingOrder) {
+  } else if (loadingPayment || loadingBooking || loadingOrder) {
     verificationStatus = 'loading'
-  } else if (bookingData?.metadata) {
+  } else if (payment && bookingData?.metadata) {
     verificationStatus = 'success'
     verifiedType = 'booking'
-  } else if (orderData?.metadata) {
+  } else if (payment && orderData?.metadata) {
     verificationStatus = 'success'
     verifiedType = 'order'
   } else {
-    // Loaded both, result code 0, but no data found
+    // Loaded everything, result code 0, but no matching local data found
     verificationStatus = 'failed'
     errorMessage = 'Không tìm thấy thông tin đơn hàng trong hệ thống'
   }
@@ -87,7 +97,7 @@ const PaymentResult = () => {
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground'>Mã giao dịch</span>
-              <span className='font-mono font-medium'>{orderId}</span>
+              <span className='font-mono font-medium'>{transactionId}</span>
             </div>
           </div>
 
@@ -98,7 +108,7 @@ const PaymentResult = () => {
               </Button>
             ) : (
               <Button className='w-full' size='lg' variant='gold' asChild>
-                <Link to='/profile'>Xem đơn hàng của tôi</Link>
+                <Link to='/orders'>Xem đơn hàng của tôi</Link>
               </Button>
             )}
             <Button variant='ghost' className='w-full' asChild>

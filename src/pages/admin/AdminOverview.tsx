@@ -130,7 +130,7 @@ const AdminOverview = () => {
                     const status = statusConfig[booking.status as keyof typeof statusConfig] || statusConfig.pending
                     return (
                       <tr key={booking.id} className='border-b border-border/50 hover:bg-muted/50'>
-                        <td className='py-3 px-2 font-medium'>{booking.customer}</td>
+                        <td className='py-3 px-2 font-medium'>{booking.customer ?? 'Vãng lai'}</td>
                         <td className='py-3 px-2 text-muted-foreground'>{booking.serviceName}</td>
                         <td className='py-3 px-2 text-muted-foreground'>{booking.barberName}</td>
                         <td className='py-3 px-2 text-muted-foreground'>{booking.time}</td>

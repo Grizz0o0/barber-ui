@@ -12,6 +12,36 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { NAV_LINKS, UserRole } from '@/lib/constants'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useGetNotifications } from '@/queries/useNotification'
+import { Badge } from '@/components/ui/badge'
+
+const NotificationBell = () => {
+  const { data } = useGetNotifications()
+
+  // Unwrap data to get unreadCount safely
+  const unreadCount =
+    data && (data as any).metadata
+      ? (data as any).metadata.unreadCount
+      : data && (data as any).unreadCount
+        ? (data as any).unreadCount
+        : 0
+
+  return (
+    <Button variant='ghost' size='icon' className='relative' asChild>
+      <Link to='/notifications' aria-label='Thông báo'>
+        <Bell className='w-5 h-5' />
+        {unreadCount > 0 && (
+          <Badge
+            variant='destructive'
+            className='absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full'
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </Badge>
+        )}
+      </Link>
+    </Button>
+  )
+}
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -81,11 +111,7 @@ const Header = () => {
                     <ShoppingCart className='w-5 h-5' />
                   </Link>
                 </Button>
-                <Button variant='ghost' size='icon' asChild>
-                  <Link to='/notifications' aria-label='Thông báo'>
-                    <Bell className='w-5 h-5' />
-                  </Link>
-                </Button>
+                <NotificationBell />
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' className='relative h-8 w-8 rounded-full'>

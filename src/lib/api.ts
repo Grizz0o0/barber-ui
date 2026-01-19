@@ -42,7 +42,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
 }
 
 // API client
-export const apiClient = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+export const apiClient = async <T = any>(
+  endpoint: string,
+  options: RequestInit & { responseType?: 'json' | 'blob' } = {}
+): Promise<T> => {
   const token = getAccessToken()
   const userId = getUserId()
 
@@ -59,7 +62,11 @@ export const apiClient = async <T = any>(endpoint: string, options: RequestInit 
     ;(headers as Record<string, string>)['x-client-id'] = userId
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Ensure proper slash formatting
+  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`
+  const path = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers
   })
@@ -132,6 +139,10 @@ export const apiClient = async <T = any>(endpoint: string, options: RequestInit 
     throw error
   }
 
+  if (options.responseType === 'blob') {
+    return response.blob() as any
+  }
+
   return response.json()
 }
 
@@ -139,7 +150,8 @@ export const apiClient = async <T = any>(endpoint: string, options: RequestInit 
 export const request = {
   get: <T = any>(
     endpoint: string,
-    params?: Record<string, string | number | boolean | (string | number | boolean)[] | undefined | null>
+    params?: Record<string, string | number | boolean | (string | number | boolean)[] | undefined | null>,
+    options?: RequestInit & { responseType?: 'json' | 'blob' }
   ) => {
     let url = endpoint
     if (params) {
@@ -158,26 +170,30 @@ export const request = {
         url += `?${qs}`
       }
     }
-    return apiClient<T>(url, { method: 'GET' })
+    return apiClient<T>(url, { method: 'GET', ...options })
   },
 
-  post: <T = any>(endpoint: string, body?: unknown) =>
+  post: <T = any>(endpoint: string, body?: unknown, options?: RequestInit & { responseType?: 'json' | 'blob' }) =>
     apiClient<T>(endpoint, {
       method: 'POST',
-      body: body instanceof FormData ? body : JSON.stringify(body)
+      body: body instanceof FormData ? body : JSON.stringify(body),
+      ...options
     }),
 
-  patch: <T = any>(endpoint: string, body?: unknown) =>
+  patch: <T = any>(endpoint: string, body?: unknown, options?: RequestInit & { responseType?: 'json' | 'blob' }) =>
     apiClient<T>(endpoint, {
       method: 'PATCH',
-      body: body instanceof FormData ? body : JSON.stringify(body)
+      body: body instanceof FormData ? body : JSON.stringify(body),
+      ...options
     }),
 
-  put: <T = any>(endpoint: string, body?: unknown) =>
+  put: <T = any>(endpoint: string, body?: unknown, options?: RequestInit & { responseType?: 'json' | 'blob' }) =>
     apiClient<T>(endpoint, {
       method: 'PUT',
-      body: body instanceof FormData ? body : JSON.stringify(body)
+      body: body instanceof FormData ? body : JSON.stringify(body),
+      ...options
     }),
 
-  delete: <T = any>(endpoint: string) => apiClient<T>(endpoint, { method: 'DELETE' })
+  delete: <T = any>(endpoint: string, options?: RequestInit & { responseType?: 'json' | 'blob' }) =>
+    apiClient<T>(endpoint, { method: 'DELETE', ...options })
 }

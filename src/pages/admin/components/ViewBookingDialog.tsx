@@ -47,7 +47,7 @@ const ViewBookingDialog = ({ open, onOpenChange, booking, onSuccess }: ViewBooki
   const { data: servicesData, isLoading: loadingServices } = useGetServices()
   const updateBookingMutation = useUpdateBookingMutation()
 
-  const services = (servicesData?.metadata || []) as Service[]
+  const services = (servicesData?.metadata?.services || []) as Service[]
 
   // Note: previously services were fetched only on edit mode.
   // With hooks, we can fetch always or conditionally.

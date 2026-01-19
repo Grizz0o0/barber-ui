@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import Layout from '@/components/layout/Layout'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { BookingStatus, PaymentMethod } from '@/lib/constants'
 import type { Booking as BookingType, Service, User } from '@/types'
 import { useGetBarbers } from '@/queries/useAccount'
@@ -23,7 +23,9 @@ const Booking = () => {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
-  const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const serviceIdFromUrl = searchParams.get('serviceId')
+  const [selectedService, setSelectedService] = useState<string | null>(serviceIdFromUrl)
   const [selectedBarber, setSelectedBarber] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)

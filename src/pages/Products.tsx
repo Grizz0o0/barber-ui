@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ShoppingCart, Star, Filter, PackageOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
 import Layout from '@/components/layout/Layout'
 import SEO from '@/components/common/SEO'
 import PageLoader from '@/components/common/PageLoader'
@@ -97,14 +98,16 @@ const Products = () => {
                 >
                   {/* Image */}
                   <div className='relative aspect-square overflow-hidden bg-secondary'>
-                    <img
-                      src={
-                        product.images?.[0] ||
-                        'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?w=400&h=400&fit=crop'
-                      }
-                      alt={product.name}
-                      className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500'
-                    />
+                    <Link to={`/products/${product._id}`}>
+                      <img
+                        src={
+                          product.images?.[0] ||
+                          'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?w=400&h=400&fit=crop'
+                        }
+                        alt={product.name}
+                        className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500'
+                      />
+                    </Link>
                   </div>
 
                   {/* Content */}
@@ -116,7 +119,7 @@ const Products = () => {
                     </div>
 
                     <h3 className='text-xl font-semibold text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-1 overflow-hidden'>
-                      {product.name}
+                      <Link to={`/products/${product._id}`}>{product.name}</Link>
                     </h3>
                     <p className='text-muted-foreground text-sm mb-3 line-clamp-2'>{product.description}</p>
 

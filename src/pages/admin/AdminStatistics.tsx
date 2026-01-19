@@ -18,10 +18,7 @@ import {
   Cell
 } from 'recharts'
 import { TrendingUp, DollarSign, Users, Calendar, Download, Loader2 } from 'lucide-react'
-import { useGetDashboardStats } from '@/queries/useStatistic'
-// If formatPrice was in mockData and not utils, I might need to fix it.
-// History said "formatPrice from mockData", I should verify if I can import it or should implement it.
-// I'll implement a local helper if needed or import from utils if I'm sure. I'll check imports.
+import { useGetDashboardStats, useExportRevenue } from '@/queries/useStatistic'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
@@ -47,7 +44,25 @@ interface DashboardStats {
 const AdminStatistics = () => {
   const [period, setPeriod] = useState('month')
   const { data: statsData, isLoading } = useGetDashboardStats(period)
+  const exportRevenueMutation = useExportRevenue()
   const data: DashboardStats | null = statsData?.metadata || null
+
+  const handleExport = () => {
+    exportRevenueMutation.mutate(undefined, {
+      onSuccess: (response: any) => {
+        const url = window.URL.createObjectURL(new Blob([response]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `revenue-report-${new Date().toISOString().split('T')[0]}.xlsx`)
+        document.body.appendChild(link)
+        link.click()
+        link.parentNode?.removeChild(link)
+      },
+      onError: (error) => {
+        console.error('Export failed:', error)
+      }
+    })
+  }
 
   if (isLoading && !data) {
     return (
@@ -105,8 +120,12 @@ const AdminStatistics = () => {
               <SelectItem value='year'>Năm nay</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant='outline'>
-            <Download className='w-4 h-4 mr-2' />
+          <Button variant='outline' onClick={handleExport} disabled={exportRevenueMutation.isPending}>
+            {exportRevenueMutation.isPending ? (
+              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+            ) : (
+              <Download className='w-4 h-4 mr-2' />
+            )}
             Xuất báo cáo
           </Button>
         </div>

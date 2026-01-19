@@ -8,6 +8,7 @@ export interface BarberSchedule {
   dayOfWeek: number // 0-6 (Sunday-Saturday)
   startTime: string // "HH:mm"
   endTime: string // "HH:mm"
+  isDayOff?: boolean
 }
 
 type GetBarberScheduleParams = {
@@ -21,5 +22,26 @@ export const useGetBarberSchedules = (params?: GetBarberScheduleParams) => {
   return useQuery({
     queryKey: [BARBER_SCHEDULE_QUERY_KEY, params],
     queryFn: () => http.get<SuccessResponse<{ schedules: BarberSchedule[] }>>('barber-schedules', params)
+  })
+}
+
+export const useCreateBarberSchedule = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<BarberSchedule>) => http.post<SuccessResponse<BarberSchedule>>('barber-schedules', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [BARBER_SCHEDULE_QUERY_KEY] })
+    }
+  })
+}
+
+export const useUpdateBarberSchedule = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<BarberSchedule> }) =>
+      http.patch<SuccessResponse<BarberSchedule>>(`barber-schedules/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [BARBER_SCHEDULE_QUERY_KEY] })
+    }
   })
 }

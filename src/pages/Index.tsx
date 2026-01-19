@@ -158,8 +158,8 @@ const Index = () => {
 
       {/* Barbers Section */}
       <section className='section bg-secondary/30'>
-        <div className='container mx-auto px-4'>
-          <div className='text-center max-w-2xl mx-auto mb-16'>
+        <div className='container mx-auto py-16 px-4'>
+          <div className='text-center max-w-2xl mx-auto  mb-16'>
             <h2 className='text-3xl md:text-4xl font-bold mb-4'>Đội Ngũ Barber</h2>
             <p className='text-muted-foreground text-lg'>
               Những nghệ nhân tạo mẫu tóc chuyên nghiệp, tận tâm và giàu kinh nghiệm
@@ -179,7 +179,7 @@ const Index = () => {
                       alt={barber.name}
                       className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 grayscale group-hover:grayscale-0'
                     />
-                    <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4'>
+                    <div className='absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4'>
                       <div className='text-white'>
                         <p className='font-medium text-sm'>{barber.specialty || 'Stylist'}</p>
                         <div className='flex items-center text-yellow-500 text-sm mt-1'>
@@ -207,6 +207,64 @@ const Index = () => {
                 Xem thêm về chúng tôi
               </Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Stylist Promo */}
+      <section className='py-20 bg-linear-to-r from-purple-900/10 to-blue-900/10'>
+        <div className='container mx-auto px-4'>
+          <div className='flex flex-col md:flex-row items-center justify-between gap-12 max-w-5xl mx-auto'>
+            <div className='flex-1 space-y-6'>
+              <div className='inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-sm font-medium'>
+                <Star className='w-4 h-4 mr-2' />
+                Tính năng mới
+              </div>
+              <h2 className='text-3xl md:text-4xl font-bold'>
+                Bạn chưa biết chọn <br />
+                <span className='bg-linear-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
+                  Kiểu tóc nào?
+                </span>
+              </h2>
+              <p className='text-lg text-muted-foreground'>
+                Đừng lo lắng! Hãy để Stylist AI của chúng tôi tư vấn cho bạn. Chỉ cần cho chúng tôi biết về khuôn mặt và
+                phong cách mong muốn, AI sẽ gợi ý những kiểu tóc phù hợp nhất.
+              </p>
+              <Link to='/ai-stylist' className='inline-block'>
+                <Button className='bg-linear-to-r from-purple-600 to-blue-600 hover:opacity-90 transition-opacity text-white border-0 h-12 px-8 text-lg shadow-lg hover:translate-y-0.5'>
+                  Thử ngay Stylist AI
+                </Button>
+              </Link>
+            </div>
+            <div className='flex-1 relative'>
+              <div className='relative z-10 bg-card p-6 rounded-2xl shadow-xl border border-border/50 max-w-sm mx-auto rotate-3 hover:rotate-0 transition-transform duration-300'>
+                <div className='flex items-center gap-3 mb-4 border-b pb-3'>
+                  <div className='w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center'>
+                    <Star className='w-6 h-6 text-purple-600' />
+                  </div>
+                  <div>
+                    <h3 className='font-bold'>Gợi ý từ AI</h3>
+                    <p className='text-xs text-muted-foreground'>Dựa trên khuôn mặt Tròn</p>
+                  </div>
+                </div>
+                <div className='space-y-3'>
+                  <div className='p-3 bg-secondary/50 rounded-lg'>
+                    <h4 className='font-medium text-primary mb-1'>Side Part Classic</h4>
+                    <p className='text-sm text-muted-foreground'>
+                      Phù hợp để tạo góc cạnh cho khuôn mặt tròn, mang lại vẻ lịch lãm.
+                    </p>
+                  </div>
+                  <div className='p-3 bg-secondary/50 rounded-lg opacity-70'>
+                    <h4 className='font-medium text-primary mb-1'>Textured Crop</h4>
+                    <p className='text-sm text-muted-foreground'>
+                      Tạo độ phồng tự nhiên, giúp khuôn mặt trông thon gọn hơn.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className='absolute top-10 -right-4 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl -z-10' />
+              <div className='absolute -bottom-10 -left-4 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl -z-10' />
+            </div>
           </div>
         </div>
       </section>
@@ -243,7 +301,7 @@ const Index = () => {
 
       {/* Testimonials */}
       <section className='section md:px-0'>
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto py-16 px-4'>
           <div className='text-center max-w-2xl mx-auto mb-16'>
             <h2 className='text-3xl md:text-4xl font-bold mb-4'>Khách Hàng Nói Gì?</h2>
             <p className='text-muted-foreground text-lg'>Hàng ngàn khách hàng đã hài lòng với dịch vụ của chúng tôi</p>

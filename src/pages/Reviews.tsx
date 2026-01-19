@@ -17,7 +17,12 @@ import {
   Loader2
 } from 'lucide-react'
 import { useGetServices } from '@/queries/useService'
-import { useGetReviews, useCreateReviewMutation } from '@/queries/useReview'
+import {
+  useGetReviews,
+  useCreateReviewMutation,
+  useLikeReviewMutation,
+  useReplyReviewMutation
+} from '@/queries/useReview'
 import { useGetBookings } from '@/queries/useBooking'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
@@ -31,7 +36,6 @@ import { useGetBarbers } from '@/queries/useAccount'
 
 const Reviews = () => {
   const { isAuthenticated, user } = useAuth()
-  const [extraLikes, setExtraLikes] = useState<Record<string, number>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const [filterService, setFilterService] = useState('all')
@@ -55,12 +59,8 @@ const Reviews = () => {
   // Derived state
 
   const reviews = useMemo(() => {
-    const rawReviews = (reviewsData?.metadata?.reviews || []) as Review[]
-    return rawReviews.map((r) => ({
-      ...r,
-      likes: (r.likes || 0) + (extraLikes[r._id] || 0)
-    }))
-  }, [reviewsData, extraLikes])
+    return (reviewsData?.metadata?.reviews || []) as Review[]
+  }, [reviewsData])
 
   const services = (servicesData?.metadata?.services || []) as Service[]
 
@@ -85,6 +85,8 @@ const Reviews = () => {
   })
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [replyIndex, setReplyIndex] = useState<string | null>(null)
+  const [replyContent, setReplyContent] = useState('')
 
   const filteredReviews = reviews
     .filter((r) => {
@@ -160,11 +162,38 @@ const Reviews = () => {
 
   const isSubmittingReview = createReviewMutation.isPending
 
+  const likeReviewMutation = useLikeReviewMutation()
+  const replyReviewMutation = useReplyReviewMutation()
+
   const handleLike = (reviewId: string) => {
-    setExtraLikes((prev) => ({
-      ...prev,
-      [reviewId]: (prev[reviewId] || 0) + 1
-    }))
+    if (!isAuthenticated) {
+      toast.info('Vui lòng đăng nhập để thích đánh giá')
+      return
+    }
+    likeReviewMutation.mutate(reviewId)
+  }
+
+  const handleOpenReply = (reviewId: string, currentReply?: string) => {
+    setReplyIndex(reviewId)
+    setReplyContent(currentReply || '')
+  }
+
+  const handleSubmitReply = () => {
+    if (!replyIndex || !replyContent.trim()) return
+
+    replyReviewMutation.mutate(
+      { id: replyIndex, body: { reply: replyContent } },
+      {
+        onSuccess: () => {
+          toast.success('Phản hồi thành công')
+          setReplyIndex(null)
+          setReplyContent('')
+        },
+        onError: (error: any) => {
+          toast.error(error.message || 'Phản hồi thất bại')
+        }
+      }
+    )
   }
 
   if (isLoading) {
@@ -416,19 +445,39 @@ const Reviews = () => {
                             ))}
                           </div>
                         )}
-                        <div className='flex items-center gap-4'>
+                        {review.reply && (
+                          <div className='mt-4 bg-muted/50 p-4 rounded-lg'>
+                            <p className='text-sm font-semibold mb-1'>Phản hồi từ cửa hàng:</p>
+                            <p className='text-sm text-muted-foreground'>{review.reply}</p>
+                          </div>
+                        )}
+
+                        <div className='flex items-center gap-4 mt-4'>
                           <Button
                             variant='ghost'
                             size='sm'
-                            className='text-muted-foreground hover:text-primary'
+                            className={`${
+                              review.likes?.includes(user?._id || '') ? 'text-primary' : 'text-muted-foreground'
+                            } hover:text-primary transition-colors`}
                             onClick={() => handleLike(review._id)}
                           >
-                            <ThumbsUp className='w-4 h-4 mr-1' />
-                            {review.likes || 0} Likes
+                            <ThumbsUp
+                              className={`w-4 h-4 mr-1 ${review.likes?.includes(user?._id || '') ? 'fill-current' : ''}`}
+                            />
+                            {review.likes?.length || 0} Likes
                           </Button>
-                          <Button variant='ghost' size='sm' className='text-muted-foreground'>
-                            <MessageCircle className='w-4 h-4 mr-1' />0 Replies
-                          </Button>
+
+                          {['admin', 'barber'].includes((user?.role || '').toLowerCase()) && (
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='text-muted-foreground hover:text-primary'
+                              onClick={() => handleOpenReply(review._id, review.reply)}
+                            >
+                              <MessageCircle className='w-4 h-4 mr-1' />
+                              {review.reply ? 'Sửa phản hồi' : 'Trả lời'}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -445,6 +494,30 @@ const Reviews = () => {
           </div>
         </div>
       </section>
+      {/* Reply Dialog */}
+      <Dialog open={!!replyIndex} onOpenChange={(open) => !open && setReplyIndex(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trả lời đánh giá</DialogTitle>
+          </DialogHeader>
+          <div className='py-4'>
+            <Textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder='Nhập nội dung phản hồi...'
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant='ghost' onClick={() => setReplyIndex(null)}>
+              Hủy
+            </Button>
+            <Button variant='gold' onClick={handleSubmitReply} disabled={replyReviewMutation.isPending}>
+              {replyReviewMutation.isPending ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Gửi phản hồi'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   )
 }

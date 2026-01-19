@@ -10,6 +10,7 @@ import Layout from '@/components/layout/Layout'
 import { useAuth } from '@/contexts/AuthContext'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useGetOrders, useUpdateOrderMutation } from '@/queries/useOrder'
+import { useCreateMomoPaymentMutation } from '@/queries/usePayment'
 import { formatPrice } from '@/lib/constants'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -40,6 +41,7 @@ const MyOrders = () => {
 
   const orders = (ordersData?.metadata?.orders || []) as Order[]
   const updateOrderMutation = useUpdateOrderMutation()
+  const createMomoPaymentMutation = useCreateMomoPaymentMutation()
 
   // Helper for status badge
   const getStatusBadge = (status: string) => {
@@ -99,6 +101,31 @@ const MyOrders = () => {
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order)
     setIsDetailsOpen(true)
+  }
+
+  const handleRepay = (order: Order) => {
+    setSelectedOrder(order) // Set selected order to show loading state correctly if we filter by ID
+    toast.loading('Đang chuyển hướng đến MoMo...')
+    createMomoPaymentMutation.mutate(
+      {
+        amount: order.totalPrice,
+        orderId: order._id,
+        orderInfo: `Thanh toan don hang #${order._id.slice(-6).toUpperCase()}`
+      },
+      {
+        onSuccess: (paymentRes) => {
+          if (paymentRes.metadata?.payUrl) {
+            window.location.assign(paymentRes.metadata.payUrl)
+          } else {
+            toast.error('Không lấy được link thanh toán MoMo')
+          }
+        },
+        onError: (err: any) => {
+          console.error('MoMo payment failed', err)
+          toast.error('Lỗi khi khởi tạo thanh toán MoMo')
+        }
+      }
+    )
   }
 
   if (isLoading && !orders.length) {
@@ -271,7 +298,16 @@ const MyOrders = () => {
 
                             {/* Show Pay Now if pending payment */}
                             {order.status === 'pending_payment' && order.paymentMethod === 'MoMo' && (
-                              <Button variant='default' size='sm' className='bg-pink-600 hover:bg-pink-700'>
+                              <Button
+                                variant='default'
+                                size='sm'
+                                className='bg-pink-600 hover:bg-pink-700'
+                                onClick={() => handleRepay(order)}
+                                disabled={createMomoPaymentMutation.isPending}
+                              >
+                                {createMomoPaymentMutation.isPending && selectedOrder?._id === order._id ? (
+                                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                                ) : null}
                                 Thanh toán ngay
                               </Button>
                             )}

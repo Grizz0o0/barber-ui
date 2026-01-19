@@ -80,7 +80,7 @@ const Services = () => {
 
                     <div className='flex items-center justify-between pt-4 border-t border-border'>
                       <p className='text-primary font-bold text-lg'>{formatPrice(service.price)}</p>
-                      <Link to='/booking'>
+                      <Link to={`/booking?serviceId=${service._id}`}>
                         <Button variant='outline' size='sm'>
                           Đặt lịch
                           <ArrowRight className='w-4 h-4' />

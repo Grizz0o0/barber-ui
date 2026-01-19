@@ -10,24 +10,34 @@ interface ViewScheduleDialogProps {
   barberName: string
 }
 
-const DAYS_OF_WEEK = [
-  'Chủ Nhật', // 0
-  'Thứ 2', // 1
-  'Thứ 3', // 2
-  'Thứ 4', // 3
-  'Thứ 5', // 4
-  'Thứ 6', // 5
-  'Thứ 7' // 6
-]
+// Helper to get current week days (Mon-Sun)
+const getCurrentWeekDays = () => {
+  const dates = []
+  const today = new Date()
+  const currentDay = today.getDay()
+
+  const daysToMonday = currentDay === 0 ? 6 : currentDay - 1
+
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - daysToMonday)
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    dates.push(d)
+  }
+  return dates
+}
 
 const ViewScheduleDialog = ({ open, onOpenChange, barberId, barberName }: ViewScheduleDialogProps) => {
   const { data, isLoading } = useGetBarberSchedules({ barber: barberId || undefined })
-  const schedules = data?.data?.schedules || []
+  const schedules = data?.metadata?.schedules || []
 
-  // Helper to find schedule for a specific day index (0-6)
   const getScheduleForDay = (dayIndex: number) => {
     return schedules.find((s: BarberSchedule) => s.dayOfWeek === dayIndex)
   }
+
+  const displayDates = getCurrentWeekDays()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,8 +56,12 @@ const ViewScheduleDialog = ({ open, onOpenChange, barberId, barberName }: ViewSc
             </div>
           ) : (
             <div className='space-y-3'>
-              {DAYS_OF_WEEK.map((dayName, index) => {
-                const schedule = getScheduleForDay(index)
+              {displayDates.map((date, index) => {
+                const dayIndex = date.getDay()
+                const dayName = date.toLocaleDateString('vi-VN', { weekday: 'long' })
+                const dateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+                const schedule = getScheduleForDay(dayIndex)
+
                 return (
                   <div
                     key={index}
@@ -57,7 +71,10 @@ const ViewScheduleDialog = ({ open, onOpenChange, barberId, barberName }: ViewSc
                         : 'bg-muted/30 border-transparent text-muted-foreground'
                     }`}
                   >
-                    <span className='font-medium text-sm'>{dayName}</span>
+                    <div className='flex flex-col'>
+                      <span className='font-medium text-sm capitalize'>{dayName}</span>
+                      <span className='text-xs text-muted-foreground'>{dateStr}</span>
+                    </div>
                     {schedule ? (
                       <div className='flex items-center gap-2 text-sm font-medium text-primary'>
                         <Clock className='w-4 h-4' />
