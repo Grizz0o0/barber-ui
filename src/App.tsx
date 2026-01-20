@@ -19,6 +19,7 @@ const Cart = lazy(() => import('./pages/Cart'))
 const Login = lazy(() => import('./pages/Login'))
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Register = lazy(() => import('./pages/Register'))
 const Checkout = lazy(() => import('./pages/Checkout'))
 const OrderSuccess = lazy(() => import('./pages/OrderSuccess'))
@@ -86,6 +87,7 @@ const App = () => (
                 <Route path='/login' element={<Login />} />
                 <Route path='/oauth/google' element={<OAuthCallback />} />
                 <Route path='/forgot-password' element={<ForgotPassword />} />
+                <Route path='/reset-password' element={<ResetPassword />} />
                 <Route path='/register' element={<Register />} />
                 <Route path='/bookings' element={<MyBookings />} />
                 <Route path='/orders' element={<MyOrders />} />

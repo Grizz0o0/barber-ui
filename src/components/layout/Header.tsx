@@ -14,6 +14,7 @@ import { NAV_LINKS, UserRole } from '@/lib/constants'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useGetNotifications } from '@/queries/useNotification'
 import { Badge } from '@/components/ui/badge'
+import { useGetSystemConfig } from '@/queries/useSystemConfig'
 
 const NotificationBell = () => {
   const { data } = useGetNotifications()
@@ -49,6 +50,9 @@ const Header = () => {
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
 
+  const { data: configData } = useGetSystemConfig()
+  const shopInfo = configData?.metadata
+
   const handleLogout = async () => {
     if (isLoggingOut) return
     setIsLoggingOut(true)
@@ -77,11 +81,15 @@ const Header = () => {
         <div className='flex items-center justify-between h-16 md:h-20'>
           {/* Logo */}
           <Link to='/' className='flex items-center gap-2 group'>
-            <div className='flex items-center justify-center w-10 h-10 rounded-full bg-primary'>
-              <Scissors className='w-5 h-5 text-primary-foreground' />
-            </div>
+            {shopInfo?.logo ? (
+              <img src={shopInfo.logo} alt={shopInfo.storeName} className='w-10 h-10 object-contain' />
+            ) : (
+              <div className='flex items-center justify-center w-10 h-10 rounded-full bg-primary'>
+                <Scissors className='w-5 h-5 text-primary-foreground' />
+              </div>
+            )}
             <span className='font-display text-xl font-bold text-foreground group-hover:text-primary transition-colors'>
-              BarberShop
+              {shopInfo?.storeName || 'BarberShop'}
             </span>
           </Link>
 

@@ -14,6 +14,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 import { useUpdateMeMutation } from '@/queries/useAccount'
 import { useUploadImageMutation } from '@/queries/useMedia'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ChangePasswordForm from '@/components/ChangePasswordForm'
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Tên tối thiểu 2 ký tự'),
@@ -155,136 +157,165 @@ const Profile = () => {
               Thông tin <span className='text-gradient'>cá nhân</span>
             </h1>
 
-            <div className='bg-card border border-border rounded-xl p-8'>
-              {/* Avatar */}
-              <div className='flex items-center gap-6 mb-8 pb-8 border-b border-border'>
-                <div className='relative group'>
-                  <div className='w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all'>
-                    {avatarValue || user?.avatar ? (
-                      <img src={avatarValue || user?.avatar} className='w-full h-full object-cover' alt={user?.name} />
-                    ) : (
-                      <User className='w-10 h-10 text-primary' />
-                    )}
-                    {isUploading && (
-                      <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
-                        <Loader2 className='w-6 h-6 text-white animate-spin' />
+            <Tabs defaultValue='profile' className='w-full'>
+              <TabsList className='grid w-full grid-cols-2 mb-8'>
+                <TabsTrigger value='profile'>Thông tin cá nhân</TabsTrigger>
+                <TabsTrigger value='password'>Đổi mật khẩu</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value='profile'>
+                <div className='bg-card border border-border rounded-xl p-8'>
+                  {/* Avatar */}
+                  <div className='flex items-center gap-6 mb-8 pb-8 border-b border-border'>
+                    <div className='relative group'>
+                      <div className='w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-primary/50 transition-all'>
+                        {avatarValue || user?.avatar ? (
+                          <img
+                            src={avatarValue || user?.avatar}
+                            className='w-full h-full object-cover'
+                            alt={user?.name}
+                          />
+                        ) : (
+                          <User className='w-10 h-10 text-primary' />
+                        )}
+                        {isUploading && (
+                          <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+                            <Loader2 className='w-6 h-6 text-white animate-spin' />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <button
-                    type='button'
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className='absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors'
-                    title='Đổi ảnh đại diện'
-                  >
-                    <Camera className='w-4 h-4' />
-                  </button>
-                  <input
-                    type='file'
-                    ref={fileInputRef}
-                    className='hidden'
-                    accept='image/*'
-                    onChange={handleFileChange}
-                  />
-                </div>
-                <div>
-                  <h2 className='font-semibold text-foreground text-lg'>{user?.name || 'Người dùng'}</h2>
-                  <p className='text-muted-foreground'>{user?.email || 'email@example.com'}</p>
-                </div>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
-                <div className='grid md:grid-cols-2 gap-6'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='name' className='flex items-center gap-2'>
-                      <User className='w-4 h-4 text-primary' />
-                      Họ tên
-                    </Label>
-                    <Input id='name' {...register('name')} className='bg-secondary border-border' />
-                    {errors.name && <p className='text-destructive text-sm'>{errors.name.message}</p>}
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='email' className='flex items-center gap-2'>
-                      <Mail className='w-4 h-4 text-primary' />
-                      Email
-                    </Label>
-                    <Input id='email' value={user?.email || ''} disabled className='bg-secondary/50 border-border' />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='phone' className='flex items-center gap-2'>
-                      <Phone className='w-4 h-4 text-primary' />
-                      Số điện thoại
-                    </Label>
-                    <Input
-                      id='phone'
-                      {...register('phone')}
-                      className='bg-secondary border-border'
-                      placeholder='0912345678'
-                    />
-                    {errors.phone && <p className='text-destructive text-sm'>{errors.phone.message}</p>}
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label className='flex items-center gap-2'>
-                      <Calendar className='w-4 h-4 text-primary' />
-                      Giới tính
-                    </Label>
-                    <Select value={genderValue} onValueChange={(value) => setValue('gender', value as Gender)}>
-                      <SelectTrigger className='bg-secondary border-border'>
-                        <SelectValue placeholder='Chọn giới tính' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='male'>Nam</SelectItem>
-                        <SelectItem value='female'>Nữ</SelectItem>
-                        <SelectItem value='other'>Khác</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='address' className='flex items-center gap-2'>
-                    <MapPin className='w-4 h-4 text-primary' />
-                    Địa chỉ
-                  </Label>
-                  <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                    <div className='space-y-1'>
-                      <Input
-                        id='address'
-                        {...register('address')}
-                        className='bg-secondary border-border'
-                        placeholder='Số nhà, đường'
+                      <button
+                        type='button'
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className='absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors'
+                        title='Đổi ảnh đại diện'
+                      >
+                        <Camera className='w-4 h-4' />
+                      </button>
+                      <input
+                        type='file'
+                        ref={fileInputRef}
+                        className='hidden'
+                        accept='image/*'
+                        onChange={handleFileChange}
                       />
                     </div>
-                    <div className='space-y-1'>
-                      <Input
-                        id='district'
-                        {...register('district')}
-                        className='bg-secondary border-border'
-                        placeholder='Quận / Huyện'
-                      />
-                    </div>
-                    <div className='space-y-1'>
-                      <Input
-                        id='city'
-                        {...register('city')}
-                        className='bg-secondary border-border'
-                        placeholder='Tỉnh / Thành phố'
-                      />
+                    <div>
+                      <h2 className='font-semibold text-foreground text-lg'>{user?.name || 'Người dùng'}</h2>
+                      <p className='text-muted-foreground'>{user?.email || 'email@example.com'}</p>
                     </div>
                   </div>
-                </div>
 
-                <Button type='submit' variant='gold' disabled={updateMeMutation.isPending} className='w-full md:w-auto'>
-                  {updateMeMutation.isPending && <Loader2 className='w-4 h-4 animate-spin' />}
-                  Cập nhật thông tin
-                </Button>
-              </form>
-            </div>
+                  {/* Form */}
+                  <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
+                    <div className='grid md:grid-cols-2 gap-6'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='name' className='flex items-center gap-2'>
+                          <User className='w-4 h-4 text-primary' />
+                          Họ tên
+                        </Label>
+                        <Input id='name' {...register('name')} className='bg-secondary border-border' />
+                        {errors.name && <p className='text-destructive text-sm'>{errors.name.message}</p>}
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='email' className='flex items-center gap-2'>
+                          <Mail className='w-4 h-4 text-primary' />
+                          Email
+                        </Label>
+                        <Input
+                          id='email'
+                          value={user?.email || ''}
+                          disabled
+                          className='bg-secondary/50 border-border'
+                        />
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='phone' className='flex items-center gap-2'>
+                          <Phone className='w-4 h-4 text-primary' />
+                          Số điện thoại
+                        </Label>
+                        <Input
+                          id='phone'
+                          {...register('phone')}
+                          className='bg-secondary border-border'
+                          placeholder='0912345678'
+                        />
+                        {errors.phone && <p className='text-destructive text-sm'>{errors.phone.message}</p>}
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label className='flex items-center gap-2'>
+                          <Calendar className='w-4 h-4 text-primary' />
+                          Giới tính
+                        </Label>
+                        <Select value={genderValue} onValueChange={(value) => setValue('gender', value as Gender)}>
+                          <SelectTrigger className='bg-secondary border-border'>
+                            <SelectValue placeholder='Chọn giới tính' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='male'>Nam</SelectItem>
+                            <SelectItem value='female'>Nữ</SelectItem>
+                            <SelectItem value='other'>Khác</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label htmlFor='address' className='flex items-center gap-2'>
+                        <MapPin className='w-4 h-4 text-primary' />
+                        Địa chỉ
+                      </Label>
+                      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                        <div className='space-y-1'>
+                          <Input
+                            id='address'
+                            {...register('address')}
+                            className='bg-secondary border-border'
+                            placeholder='Số nhà, đường'
+                          />
+                        </div>
+                        <div className='space-y-1'>
+                          <Input
+                            id='district'
+                            {...register('district')}
+                            className='bg-secondary border-border'
+                            placeholder='Quận / Huyện'
+                          />
+                        </div>
+                        <div className='space-y-1'>
+                          <Input
+                            id='city'
+                            {...register('city')}
+                            className='bg-secondary border-border'
+                            placeholder='Tỉnh / Thành phố'
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      type='submit'
+                      variant='gold'
+                      disabled={updateMeMutation.isPending}
+                      className='w-full md:w-auto'
+                    >
+                      {updateMeMutation.isPending && <Loader2 className='w-4 h-4 animate-spin' />}
+                      Cập nhật thông tin
+                    </Button>
+                  </form>
+                </div>
+              </TabsContent>
+
+              <TabsContent value='password'>
+                <div className='bg-card border border-border rounded-xl p-8'>
+                  <ChangePasswordForm />
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </section>
