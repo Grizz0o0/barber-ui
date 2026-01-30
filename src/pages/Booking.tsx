@@ -128,7 +128,7 @@ const Booking = () => {
             createMomoPaymentMutation.mutate(
               {
                 amount,
-                orderId: bookingId,
+                bookingId: bookingId,
                 orderInfo: `Thanh toan dat lich hen Cat toc tu ${selectedBarberData?.name}`
               },
               {

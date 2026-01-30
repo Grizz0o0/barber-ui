@@ -177,7 +177,10 @@ const MyOrders = () => {
               </div>
               <div className='bg-card border border-border rounded-xl p-4 text-center'>
                 <div className='text-2xl font-bold text-foreground'>
-                  {formatPrice(orders.reduce((sum, o) => sum + (o.paymentStatus === 'paid' ? o.totalPrice : 0), 0))}
+                  {formatPrice(
+                    (ordersData?.metadata as any)?.totalSpent ??
+                      orders.reduce((sum, o) => sum + (o.paymentStatus === 'paid' ? Number(o.totalPrice) : 0), 0)
+                  )}
                 </div>
                 <div className='text-sm text-muted-foreground'>Tổng tiền đã chi</div>
               </div>
