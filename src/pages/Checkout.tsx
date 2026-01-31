@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { CreditCard, Smartphone, Banknote, ShieldCheck, Loader2 } from 'lucide-react'
+import { CreditCard, Smartphone, Banknote, ShieldCheck, Loader2, Ticket, CheckCircle2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 import Layout from '@/components/layout/Layout'
@@ -19,6 +19,8 @@ import { useGetCart } from '@/queries/useCart'
 import { useCreateOrderMutation } from '@/queries/useOrder'
 import { useCreateMomoPaymentMutation } from '@/queries/usePayment'
 import { useAuth } from '@/contexts/AuthContext'
+import { promotionApiRequest } from '@/apiRequests/promotion'
+import { cn } from '@/lib/utils'
 
 // Schema Validation
 const checkoutSchema = z.object({
@@ -44,6 +46,12 @@ const Checkout = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [paymentMethod, setPaymentMethod] = useState<string>(PaymentMethod.MOMO)
+
+  // Promotion State
+  const [promotionCode, setPromotionCode] = useState('')
+  const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null)
+  const [isPromoLoading, setIsPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState('')
 
   // React Hook Form
   const {
@@ -85,12 +93,52 @@ const Checkout = () => {
   const cartItems: CartItem[] = cartData?.metadata?.items || []
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
   const shipping = 0
-  const total = subtotal + shipping
+
+  // Promotion Calculation
+  const discountAmount = appliedPromotion ? appliedPromotion.discountAmount : 0
+  const total = Math.max(0, subtotal + shipping - discountAmount)
 
   const createMomoPaymentMutation = useCreateMomoPaymentMutation()
 
   // Create order mutation
   const createOrderMutation = useCreateOrderMutation()
+
+  const handleApplyPromotion = async () => {
+    if (!promotionCode.trim()) return
+    setIsPromoLoading(true)
+    setPromoError('')
+
+    try {
+      const res = await promotionApiRequest.verifyPromotion({
+        code: promotionCode.trim(),
+        amount: subtotal,
+        context: 'product'
+      })
+
+      if (res.metadata.isValid) {
+        setAppliedPromotion({
+          ...res.metadata,
+          code: promotionCode.trim()
+        })
+        toast.success('Áp dụng mã giảm giá thành công!')
+      } else {
+        setPromoError(res.metadata.message || 'Mã khuyến mãi không hợp lệ')
+        setAppliedPromotion(null)
+      }
+    } catch (err: any) {
+      console.error(err)
+      setPromoError(err.message || 'Lỗi khi kiểm tra mã khuyến mãi')
+      setAppliedPromotion(null)
+    } finally {
+      setIsPromoLoading(false)
+    }
+  }
+
+  const handleRemovePromotion = () => {
+    setPromotionCode('')
+    setPromoError('')
+    setAppliedPromotion(null)
+  }
 
   const onSubmit = (data: CheckoutFormValues) => {
     const orderData = {
@@ -100,28 +148,19 @@ const Checkout = () => {
       })),
       shippingAddress: {
         street: data.address,
-        city: 'Hà Nội', // Simplifying for now
+        city: 'Hà Nội',
         country: 'Vietnam'
       },
       paymentMethod:
         paymentMethod === PaymentMethod.MOMO ? 'MoMo' : paymentMethod === PaymentMethod.BANKING ? 'Banking' : 'Cash',
-      totalPrice: total,
-      // Note: Backend might need contact info like name/phone if not authenticated or for shipping label.
-      // Assuming backend extracts user from token or we pass it if needed.
-      // If backend logic relies on user profile, we might need to update user profile or pass these fields.
-      // For this refactor, we focus on frontend validation.
-      contactInfo: {
-        name: data.name,
-        phone: data.phone,
-        email: data.email
-      }
+      promotion: appliedPromotion ? appliedPromotion.code : undefined // Send Code
     }
 
     const validOrderPayload = {
       items: orderData.items,
       shippingAddress: orderData.shippingAddress,
-      paymentMethod: orderData.paymentMethod as 'Cash' | 'MoMo' | 'Banking' // Explicit cast to match Schema Enum
-      // totalPrice & contactInfo removed as they are not in CreateOrderReqBody
+      paymentMethod: orderData.paymentMethod as 'Cash' | 'MoMo' | 'Banking',
+      promotion: orderData.promotion
     }
 
     createOrderMutation.mutate(validOrderPayload, {
@@ -129,7 +168,7 @@ const Checkout = () => {
         queryClient.invalidateQueries({ queryKey: ['cart'] })
         const orderId = data.metadata._id
 
-        if (paymentMethod === PaymentMethod.MOMO) {
+        if (paymentMethod === PaymentMethod.MOMO && total > 0) {
           try {
             toast.loading('Đang chuyển hướng đến MoMo...')
             createMomoPaymentMutation.mutate(
@@ -155,7 +194,7 @@ const Checkout = () => {
               }
             )
           } catch (err) {
-            console.error('MoMo payment failed', err) // This catch might not catch hook errors if synchronous but safety net.
+            console.error('MoMo payment failed', err)
             navigate(`/order-success/${orderId}`)
           }
         } else {
@@ -375,10 +414,72 @@ const Checkout = () => {
                       <span className='text-muted-foreground'>Tạm tính</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
+
+                    {/* Promotion Section */}
+                    <div className='space-y-2'>
+                      <div className='flex items-center gap-2 text-sm font-medium'>
+                        <Ticket className='w-4 h-4 text-primary' /> Mã khuyến mãi
+                      </div>
+
+                      {!appliedPromotion ? (
+                        <div className='flex gap-2'>
+                          <Input
+                            placeholder='Nhập mã... '
+                            value={promotionCode}
+                            onChange={(e) => {
+                              setPromotionCode(e.target.value.toUpperCase())
+                              setPromoError('')
+                            }}
+                            disabled={isPromoLoading}
+                            className={cn(promoError && 'border-destructive focus-visible:ring-destructive')}
+                          />
+                          <Button
+                            type='button'
+                            variant='outline'
+                            onClick={handleApplyPromotion}
+                            disabled={!promotionCode || isPromoLoading}
+                          >
+                            {isPromoLoading ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Áp dụng'}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className='flex items-center justify-between bg-primary/10 p-2 rounded-md border border-primary/20 text-sm'>
+                          <div className='flex items-center gap-2'>
+                            <CheckCircle2 className='w-4 h-4 text-primary' />
+                            <div>
+                              <p className='font-medium text-primary'>{appliedPromotion.code}</p>
+                              <p className='text-[10px] text-muted-foreground'>
+                                {' '}
+                                -{formatPrice(appliedPromotion.discountAmount)}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            onClick={handleRemovePromotion}
+                            className='h-6 w-6 text-muted-foreground hover:text-destructive'
+                          >
+                            <XCircle className='w-4 h-4' />
+                          </Button>
+                        </div>
+                      )}
+                      {promoError && <p className='text-destructive text-xs mt-1'>{promoError}</p>}
+                    </div>
+
                     <div className='flex justify-between text-sm'>
                       <span className='text-muted-foreground'>Phí vận chuyển</span>
                       <span>{formatPrice(shipping)}</span>
                     </div>
+
+                    {appliedPromotion && (
+                      <div className='flex justify-between text-sm text-green-500'>
+                        <span>Giảm giá</span>
+                        <span>-{formatPrice(discountAmount)}</span>
+                      </div>
+                    )}
+
                     <Separator />
                     <div className='flex justify-between font-semibold text-lg'>
                       <span>Tổng cộng</span>

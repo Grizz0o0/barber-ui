@@ -32,6 +32,9 @@ const Booking = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>(PaymentMethod.CASH)
   const [notes, setNotes] = useState('')
 
+  // Promotion State
+  const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null)
+
   // Mutations
   const createBookingMutation = useCreateBookingMutation()
   const createMomoPaymentMutation = useCreateMomoPaymentMutation()
@@ -115,19 +118,33 @@ const Booking = () => {
         barber: selectedBarber,
         service: selectedService,
         startTime: startTime.toISOString(),
-        notes: notes
+        notes: notes,
+        promotion: appliedPromotion ? appliedPromotion.code : undefined // Send Code
       },
       {
         onSuccess: (res: any) => {
           // Payment Handling
           if (paymentMethod === PaymentMethod.MOMO && res.metadata?._id) {
             const bookingId = res.metadata._id
-            const amount = selectedServiceData?.price || 0
+
+            // Calculate final payment amount (use discount if applied)
+            const servicePrice = selectedServiceData?.price || 0
+            const discount = appliedPromotion ? appliedPromotion.discountAmount : 0
+            const finalAmount = Math.max(0, servicePrice - discount)
+
+            if (finalAmount === 0) {
+              // If free, no need for MoMo
+              toast.success('Đặt lịch thành công!', {
+                description: 'Chúng tôi sẽ liên hệ xác nhận với bạn'
+              })
+              navigate(`/booking-success/${bookingId}`)
+              return
+            }
 
             toast.loading('Đang chuyển hướng đến MoMo...')
             createMomoPaymentMutation.mutate(
               {
-                amount,
+                amount: finalAmount, // Use Discounted Price
                 bookingId: bookingId,
                 orderInfo: `Thanh toan dat lich hen Cat toc tu ${selectedBarberData?.name}`
               },
@@ -265,6 +282,8 @@ const Booking = () => {
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 notes={notes}
+                onApplyPromotion={setAppliedPromotion}
+                promotion={appliedPromotion}
               />
             )}
 

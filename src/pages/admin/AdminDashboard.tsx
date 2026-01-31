@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   ShoppingBag,
-  MessageCircle
+  MessageCircle,
+  Tag
 } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { toast } from 'sonner'
@@ -29,6 +30,7 @@ const sidebarItems = [
   { path: '/admin/bookings', label: 'Lịch đặt', icon: Calendar },
   { path: '/admin/services', label: 'Dịch vụ', icon: Scissors },
   { path: '/admin/products', label: 'Sản phẩm', icon: Package },
+  { path: '/admin/promotions', label: 'Khuyến mãi', icon: Tag },
   { path: '/admin/orders', label: 'Đơn hàng', icon: ShoppingBag },
   { path: '/admin/users', label: 'Người dùng', icon: Users },
   { path: '/admin/staff', label: 'Nhân viên', icon: Users },

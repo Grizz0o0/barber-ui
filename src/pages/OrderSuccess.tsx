@@ -9,17 +9,18 @@ import { useGetOrder } from '@/queries/useOrder'
 interface OrderItem {
   product: {
     name: string
-    price: number
+    // price might not be populated or needed if we have priceAtPurchase
     images?: string[]
   }
   quantity: number
-  price?: number
+  priceAtPurchase: number
 }
 
 interface OrderResponse {
   _id: string
   items: OrderItem[]
   totalPrice: number
+  discountAmount?: number
   paymentMethod: string
   shippingAddress: {
     street: string
@@ -44,6 +45,9 @@ const OrderSuccess = () => {
       toast.success('Đã sao chép mã đơn hàng!')
     }
   }
+
+  // Calculate subtotal
+  const subtotal = order?.items.reduce((sum, item) => sum + item.priceAtPurchase * item.quantity, 0) || 0
 
   if (isLoading) {
     return (
@@ -134,13 +138,11 @@ const OrderSuccess = () => {
                           </div>
                           <div>
                             <p className='font-medium line-clamp-1'>{item.product?.name || 'Sản phẩm'}</p>
-                            <p className='text-sm text-muted-foreground'>
-                              {formatPrice(item.product?.price || item.price || 0)}
-                            </p>
+                            <p className='text-sm text-muted-foreground'>{formatPrice(item.priceAtPurchase)}</p>
                           </div>
                         </div>
                         <span className='font-bold tabular-nums'>
-                          {formatPrice((item.product?.price || item.price || 0) * item.quantity)}
+                          {formatPrice(item.priceAtPurchase * item.quantity)}
                         </span>
                       </div>
                     ))}
@@ -173,13 +175,18 @@ const OrderSuccess = () => {
                 <div className='space-y-3 pt-6 border-t border-border dashed'>
                   <div className='flex justify-between items-center text-muted-foreground'>
                     <span>Tạm tính</span>
-                    {/* Assuming total price includes everything for now, or calculate sum */}
-                    <span>{formatPrice(order.totalPrice)}</span>
+                    <span>{formatPrice(subtotal)}</span>
                   </div>
                   <div className='flex justify-between items-center text-muted-foreground'>
                     <span>Phí vận chuyển</span>
                     <span className='text-green-500 font-medium'>Miễn phí</span>
                   </div>
+                  {order.discountAmount && order.discountAmount > 0 && (
+                    <div className='flex justify-between items-center text-green-500'>
+                      <span>Giảm giá</span>
+                      <span>-{formatPrice(order.discountAmount)}</span>
+                    </div>
+                  )}
                   <div className='flex justify-between items-center pt-2'>
                     <span className='text-lg font-semibold'>Tổng thanh toán</span>
                     <span className='text-2xl font-bold text-primary'>{formatPrice(order.totalPrice)}</span>

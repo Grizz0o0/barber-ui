@@ -47,6 +47,7 @@ const AdminStatistics = lazy(() => import('./pages/admin/AdminStatistics'))
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const AdminChat = lazy(() => import('./pages/admin/AdminChat'))
+const AdminPromotions = lazy(() => import('./pages/admin/AdminPromotions'))
 
 // Barber Lazy Load
 const BarberLayout = lazy(() => import('./components/layout/BarberLayout'))
@@ -104,6 +105,7 @@ const App = () => (
                   <Route path='bookings' element={<AdminBookings />} />
                   <Route path='services' element={<AdminServices />} />
                   <Route path='products' element={<AdminProducts />} />
+                  <Route path='promotions' element={<AdminPromotions />} />
                   <Route path='orders' element={<AdminOrders />} />
                   <Route path='staff' element={<AdminStaff />} />
                   <Route path='statistics' element={<AdminStatistics />} />
